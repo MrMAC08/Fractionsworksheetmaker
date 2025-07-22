@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fraction Visualiser</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+    input, button { padding: 6px; font-size: 16px; margin: 6px; }
+    canvas { display: block; margin: 6px auto; }
+    .block { display: inline-block; margin: 10px; vertical-align: top; }
+    .worksheet { margin-top: 30px; background: white; padding: 20px; border: 1px solid #ccc; }
+    .label { font-weight: bold; margin-bottom: 6px; text-align: center; }
+    h1 { margin-bottom: 10px; }
+    .button-row { margin-bottom: 20px; }
+    @media print {
+      .button-row, h1 {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🧮 Fraction Visualiser</h1>
+  <div class="button-row">
+    <label>Enter Fraction (e.g. 3/4 or 1 1/4): </label>
+    <input type="text" id="fractionInput" />
+    <button onclick="addBar()">Add Bar</button>
+    <button onclick="addPie()">Add Pie</button>
+    <button onclick="addLine()">Add Line</button>
+    <button onclick="window.print()">🖨️ Print Worksheet</button>
+  </div>
+
+  <div id="worksheet" class="worksheet">
+    <h2>Student Worksheet</h2>
+    <p>Name: _______________________________</p>
+    <p>Date: _______________________________</p>
+    <div id="worksheetVisuals"></div>
+  </div>
+
+  <script>
+    function parseFraction() {
+      const input = document.getElementById("fractionInput").value.trim();
+      const mixedMatch = input.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+      const fractionMatch = input.match(/^(\d+)\/(\d+)$/);
+
+      let numerator, denominator, label = input;
+
+      if (mixedMatch) {
+        const whole = parseInt(mixedMatch[1]);
+        const num = parseInt(mixedMatch[2]);
+        const den = parseInt(mixedMatch[3]);
+        numerator = whole * den + num;
+        denominator = den;
+        label = `${whole} ${num}/${den}`;
+      } else if (fractionMatch) {
+        numerator = parseInt(fractionMatch[1]);
+        denominator = parseInt(fractionMatch[2]);
+      } else {
+        alert("Invalid format. Use '3/4' or '1 1/4'");
+        return null;
+      }
+
+      return { numerator, denominator, label };
+    }
+
+    function createCanvas(w, h) {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      return c;
+    }
+
+    function addBar() {
+      const parsed = parseFraction();
+      if (!parsed) return;
+      const { numerator, denominator, label } = parsed;
+
+      const container = document.createElement("div");
+      container.className = "block";
+      container.innerHTML = `<div class='label'>Bar: ${label}</div>`;
+      const parts = Math.ceil(numerator / denominator);
+
+      for (let i = 0; i < parts; i++) {
+        const canvas = createCanvas(220, 40);
+        const ctx = canvas.getContext("2d");
+        for (let j = 0; j < denominator; j++) {
+          ctx.strokeRect(j * (200 / denominator) + 10, 10, 200 / denominator, 20);
+        }
+        container.appendChild(canvas);
+      }
+
+      document.getElementById("worksheetVisuals").appendChild(container);
+    }
+
+    function addPie() {
+      const parsed = parseFraction();
+      if (!parsed) return;
+      const { numerator, denominator, label } = parsed;
+
+      const container = document.createElement("div");
+      container.className = "block";
+      container.innerHTML = `<div class='label'>Pie: ${label}</div>`;
+      const parts = Math.ceil(numerator / denominator);
+
+      for (let i = 0; i < parts; i++) {
+        const canvas = createCanvas(120, 120);
+        const ctx = canvas.getContext("2d");
+        const slices = denominator;
+        for (let j = 0; j < slices; j++) {
+          const angle = j * 2 * Math.PI / slices;
+          const end = (j + 1) * 2 * Math.PI / slices;
+          ctx.beginPath();
+          ctx.moveTo(60, 60);
+          ctx.arc(60, 60, 50, angle, end);
+          ctx.closePath();
+          ctx.stroke();
+        }
+        container.appendChild(canvas);
+      }
+
+      document.getElementById("worksheetVisuals").appendChild(container);
+    }
+
+    function addLine() {
+      const parsed = parseFraction();
+      if (!parsed) return;
+      const { numerator, denominator, label } = parsed;
+
+      const container = document.createElement("div");
+      container.className = "block";
+      container.innerHTML = `<div class='label'>Line: ${label}</div>`;
+
+      const canvas = createCanvas(320, 50);
+      const ctx = canvas.getContext("2d");
+
+      const xStart = 20;
+      const xEnd = 300;
+      const y = 25;
+      const parts = Math.ceil(numerator / denominator);
+      const totalTicks = parts * denominator;
+
+      // Main line
+      ctx.beginPath();
+      ctx.moveTo(xStart, y);
+      ctx.lineTo(xEnd, y);
+      ctx.stroke();
+
+      // Tick marks
+      for (let i = 0; i <= totalTicks; i++) {
+        const x = xStart + ((xEnd - xStart) / totalTicks) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x, y + 10);
+        ctx.stroke();
+      }
+
+      // Numbers
+      ctx.font = "12px sans-serif";
+      for (let i = 0; i <= parts; i++) {
+        const x = xStart + ((xEnd - xStart) / parts) * i;
+        ctx.fillText(i.toString(), x - 4, y + 25);
+      }
+
+      container.appendChild(canvas);
+      document.getElementById("worksheetVisuals").appendChild(container);
+    }
+  </script>
+</body>
+</html>
